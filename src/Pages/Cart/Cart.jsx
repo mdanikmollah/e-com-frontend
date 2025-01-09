@@ -4,21 +4,31 @@ import { CiLocationOn } from "react-icons/ci";
 import { CiHeart } from "react-icons/ci";
 import { AiTwotoneDelete } from "react-icons/ai";
 import './Cart.css'
-import { useCartQuery } from '../../Redux/apiSlice';
+import { useCartQuery, usePayMutation } from '../../Redux/apiSlice';
 import useAuth from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 
 
 const Cart = () => {
   const { auth } = useAuth() 
   const [ subTotal,setSubtotal ] = useState(0) 
+  const [ orderData,setOrderData ] = useState([])
   const { data, isLoading } = useCartQuery(auth._id);
+  const [pay] = usePayMutation()
 
   useEffect(()=>{
     if(!isLoading && data && data.cart){
       let total = 0;
 
       data.cart.forEach((item)=>{
+        setOrderData((prev)=>[...prev,{product:item.product._id,inventory:item.inventory._id,quantity:item.quantity,price:item.inventory?.discountPrice.typeOfDiscount ===
+          "amount"
+            ? (item.inventory?.sellingPrice -  item.inventory?.discountPrice.price) * item.quantity
+            : 
+             ( item.inventory?.sellingPrice - (item.inventory?.sellingPrice *
+                item.inventory?.discountPrice.price) /
+                100)  * item.quantity }])
         const discountPrice = item.inventory?.discountPrice;
         const sellingPrice = item.inventory?.sellingPrice;
         const quantity = item.quantity;
@@ -31,7 +41,36 @@ const Cart = () => {
       });
       setSubtotal(total);
     }
+    return ()=>{
+      setOrderData([])
+    }
+    //console.log(data.cart);
+    
   },[isLoading,data])
+
+  const handlePay = async()=>{
+    const user = auth.user
+    console.log(auth);
+    
+    const data2 = {
+      orderId:crypto.randomUUID(),
+      total:subTotal,
+      subTotal:subTotal,
+      name:"anik",
+      address:"Kodomtoly Dhaka",
+      city:"Dhaka",
+      district:"Dhaka",
+      postcode:"1204",
+      phone:"01456656454",
+      email:"mdanik0178@gmail.com",
+      shippingCost:"10",
+      paymentType:"online",
+      orderedProducts:orderData
+    }
+    const res = await pay(data2)
+    console.log(res);
+    window.location.href = res.data.url
+  }
   
   return (
     <div id ='cart'>
@@ -41,7 +80,7 @@ const Cart = () => {
             {
               !isLoading && 
               data.cart.map((item , index)=>(
-                <div className='cart-product-box-flex'>
+                <div className='cart-product-box-flex' key={index}>
                   <div className='cart-product-flex'>
                     <div className='cart-porduct-img-box'>
                       <img src={item.product.thumbnail.imagePath} alt="not found" />
@@ -118,7 +157,8 @@ const Cart = () => {
                 </div>
               </div>
               <div className='cart-product-checkout-btn-box'>
-                <button className='cart-product-checkout-btn'>proceed to checkout (0)</button>
+                <button className='cart-product-checkout-btn' onClick={handlePay}>proceed to checkout ({subTotal})</button>
+                {/* <Link to={`${import.meta.env.VITE_API_BASE_URL}/pay`} lassName='cart-product-checkout-btn'>proceed to checkout {subTotal}</Link> */}
               </div>
           </div>
         </div>

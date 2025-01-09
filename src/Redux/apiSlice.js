@@ -77,7 +77,19 @@ export const furniroeCom = createApi({
         singleProduct: builder.query({
             query: (slug) => `/products/${slug}`
         }),
+        pay: builder.mutation({
+            query: (data) => {
+                return {
+                    url: "/pay",
+                    method: "POST",
+                    body: data,
+                    headers: {
+                        "Authorization": JSON.parse(localStorage.getItem("e-com")).accessToken
+                    }
+                }
+            }
+        }),
     })
 })
 
-export const { useRegisterMutation, useResendMailMutation, useLoginMutation, useLogoutMutation, useProductsQuery ,useSingleProductQuery, useCreateCartMutation, useCartQuery } = furniroeCom
+export const { useRegisterMutation, useResendMailMutation, useLoginMutation, useLogoutMutation, useProductsQuery ,useSingleProductQuery, useCreateCartMutation, useCartQuery, usePayMutation } = furniroeCom
